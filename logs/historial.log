@@ -14,3 +14,6 @@
 2026-06-08 15:08:37 | OK | Uso disco | 0s | 26% de 29G
 2026-06-08 15:08:43 | OK | Backup logs | 0s | Backup OK
 2026-06-08 15:08:48 | ERROR | Push GitHub | 0s | Pull falló
+2026-06-08 15:13:39 | OK | Temperatura CPU | 0s | 49.1'C
+2026-06-08 15:13:43 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-08 15:13:47 | OK | Uso disco | 0s | 26% de 29G
