@@ -36,11 +36,11 @@ def ejecutar_script(indice):
     nombre = script['nombre']
     comando = script['comando']
     
-    # Manejo especial para Push GitHub
-    if "Push GitHub" in nombre:
+    # === MANEJO ESPECIAL PARA PUSH GITHUB ===
+    if "Push GitHub" in nombre or "git push" in comando.lower():
         return ejecutar_git_push(nombre)
     
-    # Manejo normal para otros scripts
+    # === MANEJO NORMAL PARA OTROS SCRIPTS ===
     try:
         inicio = datetime.datetime.now()
         resultado = subprocess.run(
@@ -54,7 +54,7 @@ def ejecutar_script(indice):
         duracion = (fin - inicio).seconds
         exito = resultado.returncode == 0
         
-        # Obtener la salida
+        # Obtener la salida (stdout o stderr)
         if resultado.stdout:
             salida = resultado.stdout.strip()
         elif resultado.stderr:
@@ -62,7 +62,7 @@ def ejecutar_script(indice):
         else:
             salida = "Ejecutado"
         
-        # Limitar para LCD
+        # Limitar la salida para la LCD (máximo 16 caracteres)
         salida = salida[:16] if len(salida) > 16 else salida
         
         guardar_log(nombre, exito, duracion, salida)
@@ -77,14 +77,14 @@ def ejecutar_script(indice):
         return False, nombre, error_msg
 
 def ejecutar_git_push(nombre):
+    """
+    Función especial para manejar el push a GitHub con manejo de errores
+    """
     try:
         repo_path = Path("/home/pi/panel_control")
         inicio = datetime.datetime.now()
         
-        # Paso 1: Guardar todos los cambios pendientes
-        subprocess.run(['git', 'add', '.'], cwd=repo_path, capture_output=True)
-        
-        # Paso 2: Verificar si hay cambios para commitear
+        # Paso 1: Verificar si hay cambios
         status = subprocess.run(
             ['git', 'status', '--porcelain'],
             cwd=repo_path,
@@ -93,34 +93,30 @@ def ejecutar_git_push(nombre):
         )
         
         if not status.stdout.strip():
+            # No hay cambios que subir
             duracion = (datetime.datetime.now() - inicio).seconds
-            guardar_log(nombre, True, duracion, "Sin cambios")
-            return True, nombre, "Sin cambios"
+            salida = "Sin cambios"
+            guardar_log(nombre, True, duracion, salida)
+            return True, nombre, salida
+        
+        # Paso 2: Agregar el archivo de logs
+        subprocess.run(
+            ['git', 'add', 'logs/historial.log'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True
+        )
         
         # Paso 3: Hacer commit
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M')
         commit_result = subprocess.run(
-            ['git', 'commit', '-m', f"Panel update {timestamp}"],
+            ['git', 'commit', '-m', f"Update logs {timestamp}"],
             cwd=repo_path,
             capture_output=True,
             text=True
         )
         
-        if commit_result.returncode != 0:
-            duracion = (datetime.datetime.now() - inicio).seconds
-            guardar_log(nombre, False, duracion, "Commit falló")
-            return False, nombre, "Commit falló"
-        
-        # Paso 4: Obtener el hash del commit (los primeros 7 caracteres)
-        hash_result = subprocess.run(
-            ['git', 'rev-parse', '--short', 'HEAD'],
-            cwd=repo_path,
-            capture_output=True,
-            text=True
-        )
-        commit_hash = hash_result.stdout.strip()
-        
-        # Paso 5: Pull con rebase
+        # Paso 4: Hacer pull con rebase (evita el error "rejected")
         pull_result = subprocess.run(
             ['git', 'pull', '--rebase', 'origin', 'main'],
             cwd=repo_path,
@@ -129,11 +125,17 @@ def ejecutar_git_push(nombre):
         )
         
         if pull_result.returncode != 0:
+            # Error en el pull
             duracion = (datetime.datetime.now() - inicio).seconds
-            guardar_log(nombre, False, duracion, "Pull falló")
-            return False, nombre, "Pull falló"
+            error_msg = "Pull falló"
+            if "conflict" in pull_result.stderr:
+                error_msg = "Conflicto Git"
+            elif "not found" in pull_result.stderr:
+                error_msg = "No remote"
+            guardar_log(nombre, False, duracion, error_msg)
+            return False, nombre, error_msg
         
-        # Paso 6: Push
+        # Paso 5: Hacer push
         push_result = subprocess.run(
             ['git', 'push', 'origin', 'main'],
             cwd=repo_path,
@@ -144,7 +146,7 @@ def ejecutar_git_push(nombre):
         duracion = (datetime.datetime.now() - inicio).seconds
         
         if push_result.returncode == 0:
-            # Mostrar el hash en la LCD
+            # Push exitoso
             salida = f"Push: {commit_hash}"[:16]
             guardar_log(nombre, True, duracion, salida)
             return True, nombre, salida
@@ -164,17 +166,20 @@ def ejecutar_git_push(nombre):
             return False, nombre, salida
             
     except Exception as e:
-        duracion = (datetime.datetime.now() - inicio).seconds if 'inicio' in locals() else 0
+        duracion = (datetime.datetime.now() - inicio) if 'inicio' in locals() else 0
         error_msg = str(e)[:16]
-        guardar_log(nombre, False, duracion, error_msg)
+        guardar_log(nombre, False, duracion if isinstance(duracion, int) else 0, error_msg)
         return False, nombre, error_msg
 
 def guardar_log(nombre, exito, duracion, salida=""):
-    """Guarda el registro de ejecución"""
+    """
+    Guarda el registro de ejecución en el archivo de logs
+    """
     os.makedirs('logs', exist_ok=True)
     with open('logs/historial.log', 'a') as f:
         fecha = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         estado = 'OK' if exito else 'ERROR'
+        # Incluir la salida en el log
         if salida:
             f.write(f'{fecha} | {estado} | {nombre} | {duracion}s | {salida}\n')
         else:

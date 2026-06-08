@@ -1,2 +1,7 @@
 2026-06-08 15:15:38 | OK | Limpiar logs | 0s | Lineas: 0
 2026-06-08 15:15:44 | ERROR | Test error | 0s | ping: 192.168.1.
+2026-06-08 15:15:54 | OK | Push GitHub | 2s | Push OK
+2026-06-08 15:16:30 | OK | Temperatura CPU | 0s | 47.7'C
+2026-06-08 19:59:25 | OK | Temperatura CPU | 0s | 49.1'C
+2026-06-08 19:59:29 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-08 19:59:33 | OK | Uso disco | 0s | 26% de 29G
