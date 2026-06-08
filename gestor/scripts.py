@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import datetime
+from pathlib import Path
 
 ARCHIVO = 'scripts.json'
 
@@ -30,11 +31,20 @@ def ejecutar_script(indice):
     scripts = cargar_scripts()
     if not scripts or indice >= len(scripts):
         return False, 'Sin scripts', ''
+    
     script = scripts[indice]
+    nombre = script['nombre']
+    comando = script['comando']
+    
+    # === MANEJO ESPECIAL PARA PUSH GITHUB ===
+    if "Push GitHub" in nombre or "git push" in comando.lower():
+        return ejecutar_git_push(nombre)
+    
+    # === MANEJO NORMAL PARA OTROS SCRIPTS ===
     try:
         inicio = datetime.datetime.now()
         resultado = subprocess.run(
-            script['comando'],
+            comando,
             shell=True,
             timeout=30,
             capture_output=True,
@@ -43,16 +53,134 @@ def ejecutar_script(indice):
         fin = datetime.datetime.now()
         duracion = (fin - inicio).seconds
         exito = resultado.returncode == 0
-        salida = resultado.stdout.strip()
-        guardar_log(script['nombre'], exito, duracion)
-        return exito, script['nombre'], salida
+        
+        # Obtener la salida (stdout o stderr)
+        if resultado.stdout:
+            salida = resultado.stdout.strip()
+        elif resultado.stderr:
+            salida = resultado.stderr.strip()
+        else:
+            salida = "Ejecutado"
+        
+        # Limitar la salida para la LCD (máximo 16 caracteres)
+        salida = salida[:16] if len(salida) > 16 else salida
+        
+        guardar_log(nombre, exito, duracion, salida)
+        return exito, nombre, salida
+        
     except subprocess.TimeoutExpired:
-        guardar_log(script['nombre'], False, 30)
-        return False, 'Timeout', ''
+        guardar_log(nombre, False, 30, "Timeout")
+        return False, nombre, "Timeout"
+    except Exception as e:
+        error_msg = str(e)[:16]
+        guardar_log(nombre, False, 0, error_msg)
+        return False, nombre, error_msg
 
-def guardar_log(nombre, exito, duracion):
+def ejecutar_git_push(nombre):
+    """
+    Función especial para manejar el push a GitHub con manejo de errores
+    """
+    try:
+        repo_path = Path("/home/pi/panel_control")
+        inicio = datetime.datetime.now()
+        
+        # Paso 1: Verificar si hay cambios
+        status = subprocess.run(
+            ['git', 'status', '--porcelain'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        if not status.stdout.strip():
+            # No hay cambios que subir
+            duracion = (datetime.datetime.now() - inicio).seconds
+            salida = "Sin cambios"
+            guardar_log(nombre, True, duracion, salida)
+            return True, nombre, salida
+        
+        # Paso 2: Agregar el archivo de logs
+        subprocess.run(
+            ['git', 'add', 'logs/historial.log'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        # Paso 3: Hacer commit
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M')
+        commit_result = subprocess.run(
+            ['git', 'commit', '-m', f"Update logs {timestamp}"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        # Paso 4: Hacer pull con rebase (evita el error "rejected")
+        pull_result = subprocess.run(
+            ['git', 'pull', '--rebase', 'origin', 'main'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        if pull_result.returncode != 0:
+            # Error en el pull
+            duracion = (datetime.datetime.now() - inicio).seconds
+            error_msg = "Pull falló"
+            if "conflict" in pull_result.stderr:
+                error_msg = "Conflicto Git"
+            elif "not found" in pull_result.stderr:
+                error_msg = "No remote"
+            guardar_log(nombre, False, duracion, error_msg)
+            return False, nombre, error_msg
+        
+        # Paso 5: Hacer push
+        push_result = subprocess.run(
+            ['git', 'push', 'origin', 'main'],
+            cwd=repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        duracion = (datetime.datetime.now() - inicio).seconds
+        
+        if push_result.returncode == 0:
+            # Push exitoso
+            salida = "Push OK"
+            guardar_log(nombre, True, duracion, salida)
+            return True, nombre, salida
+        else:
+            # Push falló - analizar el error
+            error_stderr = push_result.stderr.lower()
+            if "rejected" in error_stderr:
+                salida = "Rechazado"
+            elif "authentication" in error_stderr:
+                salida = "Auth error"
+            elif "permission denied" in error_stderr:
+                salida = "Permiso"
+            else:
+                salida = f"Error: {push_result.stderr[:10]}"
+            
+            guardar_log(nombre, False, duracion, salida)
+            return False, nombre, salida
+            
+    except Exception as e:
+        duracion = (datetime.datetime.now() - inicio) if 'inicio' in locals() else 0
+        error_msg = str(e)[:16]
+        guardar_log(nombre, False, duracion if isinstance(duracion, int) else 0, error_msg)
+        return False, nombre, error_msg
+
+def guardar_log(nombre, exito, duracion, salida=""):
+    """
+    Guarda el registro de ejecución en el archivo de logs
+    """
     os.makedirs('logs', exist_ok=True)
     with open('logs/historial.log', 'a') as f:
         fecha = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         estado = 'OK' if exito else 'ERROR'
-        f.write(f'{fecha} | {estado} | {nombre} | {duracion}s\n')
+        # Incluir la salida en el log
+        if salida:
+            f.write(f'{fecha} | {estado} | {nombre} | {duracion}s | {salida}\n')
+        else:
+            f.write(f'{fecha} | {estado} | {nombre} | {duracion}s\n')
