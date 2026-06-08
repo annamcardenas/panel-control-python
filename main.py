@@ -1,5 +1,8 @@
 import gestor
 import time
+import threading
+from api import iniciar_api
+from gestor.notificaciones import enviar_mensaje
 
 indice_actual = 0
 ejecutando = False
@@ -15,6 +18,15 @@ def siguiente_script():
     indice_actual = (indice_actual + 1) % len(scripts)
     nombre = gestor.formatear_nombre(scripts[indice_actual]['nombre'])
     gestor.mostrar_script(indice_actual, nombre)
+
+def _notificar(nombre, exito, salida):
+    if exito:
+        if 'GitHub' in nombre:
+            enviar_mensaje(f'Push a GitHub\n*{nombre}*: {salida}')
+        else:
+            enviar_mensaje(f'OK *{nombre}*: {salida}')
+    else:
+        enviar_mensaje(f'ERROR *{nombre}*')
 
 def ejecutar_actual():
     global ejecutando
@@ -41,10 +53,42 @@ def ejecutar_actual():
         gestor.led_error()
         gestor.mostrar_error(nombre)
         gestor.pitido_error()
+    threading.Thread(target=_notificar, args=(nombre, exito, salida), daemon=True).start()
     time.sleep(3)
     gestor.mostrar_script(indice_actual, nombre)
     gestor.leds_apagar()
     ejecutando = False
+
+def ejecutar_desde_api(indice):
+    global ejecutando
+    if ejecutando:
+        return {'error': 'Panel ocupado'}
+    ejecutando = True
+    scripts = gestor.cargar_scripts()
+    if not scripts or indice >= len(scripts):
+        ejecutando = False
+        return {'error': 'Script no encontrado'}
+    nombre = gestor.formatear_nombre(scripts[indice]['nombre'])
+    gestor.mostrar_ejecutando(nombre)
+    gestor.led_ejecutando()
+    exito, resultado, salida = gestor.ejecutar_script(indice)
+    if exito:
+        gestor.led_exito()
+        if salida:
+            gestor.mostrar(nombre, salida[:16])
+        else:
+            gestor.mostrar_exito(nombre)
+        gestor.pitido_corto()
+    else:
+        gestor.led_error()
+        gestor.mostrar_error(nombre)
+        gestor.pitido_error()
+    threading.Thread(target=_notificar, args=(nombre, exito, salida), daemon=True).start()
+    time.sleep(2)
+    gestor.mostrar_script(indice, nombre)
+    gestor.leds_apagar()
+    ejecutando = False
+    return {'exito': exito, 'resultado': salida, 'script': nombre}
 
 def iniciar():
     global indice_actual
@@ -62,6 +106,9 @@ def iniciar():
     print("Pulsador = ejecutar script")
     print("Joystick = siguiente script")
     print("Ctrl+C para salir")
+    hilo_api = threading.Thread(target=iniciar_api, daemon=True)
+    hilo_api.start()
+    print("API REST iniciada en puerto 5000")
     try:
         while True:
             time.sleep(0.1)
