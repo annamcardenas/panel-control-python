@@ -1,3 +1,6 @@
 2026-06-08 21:35:32 | OK | Limpiar logs | 0s | Lineas: 0
 2026-06-08 21:35:36 | ERROR | Test error | 0s | ping: 192.168.1.
 2026-06-08 21:35:43 | OK | Push GitHub | 2s | Push: eccdb57
+2026-06-08 21:45:51 | OK | Temperatura CPU | 0s | 53.5'C
+2026-06-08 21:45:55 | ERROR | Test error | 0s | ping: 192.168.1.
+2026-06-08 21:46:00 | OK | Memoria RAM | 0s | 367Mi/3.7Gi
