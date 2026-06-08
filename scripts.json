@@ -1,0 +1,30 @@
+[
+    {
+        "nombre": "Temperatura CPU",
+        "comando": "vcgencmd measure_temp | cut -d'=' -f2"
+    },
+    {
+        "nombre": "Estado WiFi",
+        "comando": "ping -c 1 8.8.8.8 > /dev/null 2>&1 && echo 'WiFi: OK' || echo 'WiFi: KO'"
+    },
+    {
+        "nombre": "Uso disco",
+        "comando": "df -h / | awk 'NR==2 {print $5 \" de \" $2}'"
+    },
+    {
+        "nombre": "Memoria RAM",
+        "comando": "free -h | awk 'NR==2 {print $3 \"/\" $2}'"
+    },
+    {
+        "nombre": "Backup logs",
+        "comando": "tar -czf /tmp/backup_$(date +%H%M).tar.gz /home/pi/panel_control/logs/ && echo 'Backup OK' || echo 'Backup FALLO'"
+    },
+    {
+        "nombre": "Limpiar logs",
+        "comando": "truncate -s 0 /home/pi/panel_control/logs/historial.log && wc -l < /home/pi/panel_control/logs/historial.log | xargs -I{} echo 'Lineas: {}'"
+    },
+    {
+        "nombre": "Test error",
+        "comando": "ping -c 1 192.168.1.999"
+    }
+]
