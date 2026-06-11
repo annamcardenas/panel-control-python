@@ -45,7 +45,7 @@ def index():
     </style>
 </head>
 <body>
-    <h1>🎛️Panel Control</h1>
+    <h1>🎛️anel Control</h1>
     <p>Raspberry Pi 4 — Control remoto de scripts</p>
     {botones}
     <div id="resultado">Selecciona un script para ejecutar...</div>
