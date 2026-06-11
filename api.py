@@ -45,17 +45,17 @@ def index():
     </style>
 </head>
 <body>
-    <h1>🎛️ Panel Control</h1>
+    <h1>🎛️anel Control</h1>
     <p>Raspberry Pi 4 — Control remoto de scripts</p>
     {botones}
     <div id="resultado">Selecciona un script para ejecutar...</div>
-    <h2>📋 Últimas ejecuciones</h2>
+    <h2> Últimas ejecuciones</h2>
     <div id="logs">Cargando...</div>
 
     <script>
         function ejecutar(id) {{
             const div = document.getElementById('resultado');
-            div.innerHTML = '⏳ Ejecutando...';
+            div.innerHTML = 'Ejecutando...';
             div.className = '';
             document.querySelectorAll('button').forEach(b => b.disabled = true);
             fetch('/api/ejecutar/' + id)

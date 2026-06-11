@@ -30,5 +30,9 @@
     {
         "nombre": "Push GitHub",
         "comando": "cd /home/pi/panel_control && git pull origin main --rebase && git push origin main && echo 'Push: OK' || echo 'Push: FALLO'"
+    },
+        {
+        "nombre": "Mostrar IP",
+        "comando": "ip -4 addr show | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}' | grep -v '127.0.0.1' | head -1"
     }
 ]

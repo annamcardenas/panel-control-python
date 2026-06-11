@@ -1,7 +1,24 @@
-2026-06-09 23:38:56 | OK | Limpiar logs | 0s | Lineas: 0
-2026-06-09 23:39:08 | ERROR | Test error | 0s | ping: 192.168.1.
-2026-06-09 23:39:13 | OK | Estado WiFi | 0s | WiFi: OK
-2026-06-09 23:40:08 | ERROR | Test error | 0s | ping: 192.168.1.
-2026-06-09 23:40:21 | OK | Memoria RAM | 0s | 366Mi/3.7Gi
-2026-06-09 23:40:27 | OK | Temperatura CPU | 0s | 49.6'C
-2026-06-09 23:40:35 | ERROR | Test error | 0s | ping: 192.168.1.
+2026-06-09 23:41:18 | OK | Limpiar logs | 0s | Lineas: 0
+2026-06-09 23:41:25 | OK | Temperatura CPU | 0s | 48.7'C
+2026-06-09 23:41:32 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-09 23:49:40 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 17:59:41 | OK | Temperatura CPU | 0s | 45.2'C
+2026-06-10 17:59:52 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 17:59:56 | OK | Uso disco | 0s | 26% de 29G
+2026-06-10 18:00:02 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 18:01:42 | OK | Temperatura CPU | 0s | 47.2'C
+2026-06-10 18:01:59 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 18:02:05 | OK | Uso disco | 0s | 26% de 29G
+2026-06-10 18:28:44 | OK | Temperatura CPU | 0s | 50.6'C
+2026-06-10 19:13:54 | OK | Temperatura CPU | 0s | 51.1'C
+2026-06-10 19:14:13 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 19:14:20 | OK | Uso disco | 0s | 26% de 29G
+2026-06-10 19:57:25 | OK | Temperatura CPU | 0s | 46.2'C
+2026-06-10 19:57:30 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 21:15:42 | OK | Mostrar IP | 0s | 192.168.1.136
+2026-06-10 21:15:53 | OK | Mostrar IP | 0s | 192.168.1.136
+2026-06-10 21:17:44 | OK | Estado WiFi | 0s | WiFi: OK
+2026-06-10 21:17:48 | ERROR | Test error | 0s | ping: 192.168.1.
+2026-06-10 21:17:55 | ERROR | Test error | 0s | ping: 192.168.1.
+2026-06-10 21:18:01 | ERROR | Test error | 0s | ping: 192.168.1.
+2026-06-10 21:18:17 | OK | Mostrar IP | 0s | 192.168.1.136

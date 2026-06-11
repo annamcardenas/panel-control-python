@@ -7,6 +7,23 @@ from gestor.notificaciones import enviar_mensaje
 indice_actual = 0
 ejecutando = False
 
+def mostrar_ip_en_lcd():
+    import subprocess
+    import re
+    # Intentar obtener IP de la interfaz eth0 (cable) o wlan0 (WiFi)
+    ip = None
+    for interfaz in ['eth0', 'wlan0']:
+        result = subprocess.run(['ip', '-4', 'addr', 'show', interfaz], capture_output=True, text=True)
+        match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', result.stdout)
+        if match:
+            ip = match.group(1)
+            break
+    if not ip:
+        ip = "Sin IP"
+    # Mostrar en LCD
+    gestor.mostrar("Mi IP es:", ip)
+    time.sleep(5)  # 5 segundos para leerla
+
 def siguiente_script():
     global indice_actual
     if ejecutando:
@@ -94,6 +111,8 @@ def iniciar():
     global indice_actual
     gestor.mostrar_bienvenida()
     time.sleep(2)
+    mostrar_ip_en_lcd()
+    time.sleep(10)
     scripts = gestor.cargar_scripts()
     if not scripts:
         gestor.mostrar('Sin scripts', 'Añade scripts')
